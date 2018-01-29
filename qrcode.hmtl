@@ -1,0 +1,135 @@
+
+<html>
+<head>
+    <title>二维码图片下载</title>
+    <meta charset="utf-8"/>
+    <style>
+        .warp{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+<div class="warp">
+    <div id="QRcode"></div>
+    <a class="QR-download" href="#" download>下载</a>
+</div>
+<script src="js/qrcode.js"></script>
+<script src="js/html2canvas.min.js"></script>
+<script>
+    /**
+     *  输出一个带有文字说明的二维码。
+     *
+     *  @param {Object} obj 相关配置，
+     *  obj = {
+            dom : "QRcode",     //
+            url : "https://www.jianshu.com/u/1c63eeca436e",  //二维码网址
+            text : ["MiuMiu_S","提灯寻影，灯到影灭"], //二维码的文字说明
+            pic_size : 300, // 图片的尺寸大小
+            font_size : 16, //说明文字的字体大小
+        }
+     *  回调函数中返回一个base64形式的图片，以便在回调中注入到<a>标签中下载使用
+     *
+     */
+    function getQRcodeImg(obj,fn){
+        var url = obj.url,
+            size = obj.pic_size || 256;
+        font_size = obj.font_size || 18;
+        dom = document.getElementById(obj.dom);
+        dom.innerHTML = generateHTML(obj.text,size,font_size);
+        var $qrcode = dom.getElementsByClassName("QR-qrcode")[0],
+            $main = dom.getElementsByClassName("QR-main")[0];
+        new QRCode($qrcode, {
+            text: url,
+            width: size,
+            height: size
+        });
+        html2canvas($main).then(function(canvas) {
+            var base64 = concatCanvas(dom,$qrcode.getElementsByTagName("canvas")[0],canvas,20);
+            fn && fn(base64);
+        });
+        /**
+         * 根据配置拼凑要处理的html代码
+         *
+         * @param {Array} arr 要添加的文字，以数组传入
+         *
+         */
+        function generateHTML(arr,size,font_size){
+            var out = "",temp = "";
+            arr.forEach(function(item){
+                temp += "<div style='text-align:center;font-size:" +font_size+ "px;'>"+ item +"</div>" ;
+            });
+            out =
+                "<div style='position:absolute;opacity:0;'>" +
+                "<div class='QR-main' style='width: " +size+ "px;'>" +
+                temp +
+                "</div>" +
+                "</div>" +
+                "<div class='QR-qrcode' style='display:none;'></div>";
+            return out ;
+        }
+        /**
+         * 将两个canvas合并在一起
+         *
+         * @param {Object} dom canvas要添加的dom对象
+         * @param {Object} canvas1 第一个canvas
+         * @param {Object} canvas2 第二个canvas
+         * @param {Number} padding 图片的padding，默认20
+         * @return {String} 返回base64字符串
+         *
+         */
+        function concatCanvas(dom,canvas1,canvas2,padding){
+            var c1h = canvas1.height,
+                c1w = canvas1.width,
+                //    c2h = canvas2.height,
+                //    c2w = canvas2.width,
+                /*    说明：将以上两行代码改为以下两行代码；
+                 *    原因：以上两行代码在window下显示是好的，但是放到Mac下显示会出一些问题，
+                 *         仔细发现是在Mac下,html2canvas的API返回的canvas不符合预期，在MAC环境canvas返回如下：
+                 *         html2canvas($main).then(function(canvas) {
+                 *             console.log(canvas); //<canvas width="600" height="88" style="width: 300px; height: 44px;"></canvas>
+                 *         });
+                 *         可以看到看到canvas的width和height值和其style里的width和height的值有所不同，
+                 *         于是采用以下的方法来获得canvas的宽度和高度
+                 *         王二认为出现以上问题可能是因为分辨率的问题
+                 */
+                c2h = Number(canvas2.style.height.slice(0,-2));
+            c2w = Number(canvas2.style.width.slice(0,-2));
+            canvas = document.createElement("canvas");
+            padding = padding || 20 ;
+            /** 根据二维码、文字两个canvas，再加上padding计算出新的canvas的宽度和高度 **/
+            canvas.height = c1h + c2h + 2.5 * padding ;
+            canvas.width = Math.max(c1w,c2w) + 2 * padding ;
+            /** end **/
+            dom.appendChild(canvas);
+            /** 将canvas画上白色背景 **/
+            context = canvas.getContext("2d");
+            context.fillStyle ="white";
+            context.fillRect(0,0,canvas.width,canvas.height);
+            /** end **/
+            /** 将二维码、文字两个canvas绘画到一个canvas里 **/
+            context.drawImage(canvas1, padding, padding, c1w ,c1h);
+            context.drawImage(canvas2, padding, 1.5 * padding+c1h, c2w ,c2h);
+            /** end **/
+            /** 返回base64,用于注入到a标签里以便下载 **/
+            return canvas.toDataURL('image/jpeg',1);
+            /** end **/
+        }
+    }
+    var obj = {
+        dom : "QRcode",
+        url : "https://www.jianshu.com/u/1c63eeca436e",  //二维码网址
+        text : ["MiuMiu_S","提灯寻影，灯到影灭"], //二维码的文字说明
+        pic_size : 300,
+        font_size : 16
+    };
+    getQRcodeImg(obj,function(base64){
+        document.getElementsByClassName("QR-download")[0].href = base64 ;
+    });
+
+</script>
+</body>
+</html>
