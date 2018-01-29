@@ -1,7 +1,4 @@
-
-
-
-## 在页面上需要将一个URL转为二维码并配上文字说明，并提供一个下载按钮，可以下载带有文字说明的二维码图片，效果如下：
+# 在页面上需要将一个URL转为二维码并配上文字说明，并提供一个下载按钮，可以下载带有文字说明的二维码图片，效果如下：
 <br>
 
 ![效果.jpg](http://upload-images.jianshu.io/upload_images/3888312-c7d4f634677f6e08.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
